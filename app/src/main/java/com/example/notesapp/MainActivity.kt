@@ -1,43 +1,74 @@
 package com.example.notesapp
-
-import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.notesapp.ui.theme.NotesAppTheme
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            NotesAppTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Greeting("Android")
-                }
-            }
+    private val notes = mutableListOf<Note>()
+    private fun addNote(note: Note) {
+        val validationError = getValidationError(note)
+        if (validationError != null) {
+            showErrorMessage(validationError)
+        } else {
+            notes.add(note)
+            adapter.notifyItemInserted(notes.size - 1)
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-            text = "Hello $name!",
-            modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    NotesAppTheme {
-        Greeting("Android")
+    private fun editNote(position: Int, updatedNote: Note) {
+        val validationError = getValidationError(updatedNote)
+        if (validationError != null) {
+            // Handle the validation error, e.g., display an error message to the user
+            // Show the error message to the user
+            showErrorMessage(validationError)
+        } else {
+            notes[position] = updatedNote
+            adapter.notifyItemChanged(position)
+        }
     }
+
+    private fun deleteNote(position: Int) {
+        notes.removeAt(position)
+        adapter.notifyItemRemoved(position)
+    }
+
+    private fun getNote(position: Int): Note {
+        return notes[position]
+    }
+    private fun isValidNote(note: Note): Boolean {
+        val titleLength = note.title.length
+        val textLength = note.text.length
+        val isTitleValid = titleLength in 3..50
+        val isTextValid = textLength <= 120
+        return isTitleValid && isTextValid
+    }
+    private fun getValidationError(note: Note): String? {
+        val titleLength = note.title.length
+        val textLength = note.text.length
+
+        if (titleLength < 3) {
+            return "Title is too short (minimum 3 characters)."
+        } else if (titleLength > 50) {
+            return "Title is too long (maximum 50 characters)."
+        } else if (textLength > 120) {
+            return "Text is too long (maximum 120 characters)."
+        }
+
+        return null
+    }
+    private fun showErrorMessage(errorMessage: String) {
+        val toast = Toast.makeText(this, errorMessage, Toast.LENGTH_LONG)
+        val view = toast.view
+        view.setBackgroundColor(resources.getColor(R.color.colorPrimary)) // Change the background color
+        toast.setGravity(Gravity.TOP, 0, 0) // Set the gravity to top
+        toast.show()
+    }
+
 }
+
+data class Note(
+    val title: String,
+    val text: String
+)
+
+
+
