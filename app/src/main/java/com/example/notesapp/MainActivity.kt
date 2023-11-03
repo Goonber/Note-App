@@ -1,39 +1,45 @@
 package com.example.notesapp
+
+import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.*
+import com.example.notesapp.ui.theme.NotesAppTheme
 
 class MainActivity : ComponentActivity() {
-    private val notes = mutableListOf<Note>()
-    private fun addNote(note: Note) {
-        val validationError = getValidationError(note)
-        if (validationError != null) {
-            showErrorMessage(validationError)
-        } else {
-            notes.add(note)
-            adapter.notifyItemInserted(notes.size - 1)
+    private var notes by remember { mutableStateOf(listOf<Note>()) }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            NotesAppTheme {
+                NoteListScreen(
+                    notes = notes,
+                    onNoteClick = { /* Handle note click */ },
+                    onAddNoteClick = { /* Handle add note click */ }
+                )
+            }
         }
     }
 
     private fun editNote(position: Int, updatedNote: Note) {
         val validationError = getValidationError(updatedNote)
         if (validationError != null) {
-            // Handle the validation error, e.g., display an error message to the user
-            // Show the error message to the user
             showErrorMessage(validationError)
         } else {
-            notes[position] = updatedNote
-            adapter.notifyItemChanged(position)
+            notes = notes.toMutableList().also { it[position] = updatedNote }
         }
     }
 
     private fun deleteNote(position: Int) {
-        notes.removeAt(position)
-        adapter.notifyItemRemoved(position)
+        notes = notes.toMutableList().also { it.removeAt(position) }
     }
 
     private fun getNote(position: Int): Note {
         return notes[position]
     }
+
     private fun isValidNote(note: Note): Boolean {
         val titleLength = note.title.length
         val textLength = note.text.length
@@ -41,6 +47,7 @@ class MainActivity : ComponentActivity() {
         val isTextValid = textLength <= 120
         return isTitleValid && isTextValid
     }
+
     private fun getValidationError(note: Note): String? {
         val titleLength = note.title.length
         val textLength = note.text.length
@@ -55,20 +62,9 @@ class MainActivity : ComponentActivity() {
 
         return null
     }
+
     private fun showErrorMessage(errorMessage: String) {
-        val toast = Toast.makeText(this, errorMessage, Toast.LENGTH_LONG)
-        val view = toast.view
-        view.setBackgroundColor(resources.getColor(R.color.colorPrimary)) // Change the background color
-        toast.setGravity(Gravity.TOP, 0, 0) // Set the gravity to top
-        toast.show()
+        val density = LocalDensity.current.density
+        Toast.makeText(applicationContext, errorMessage, Toast.LENGTH_LONG).show()
     }
-
 }
-
-data class Note(
-    val title: String,
-    val text: String
-)
-
-
-
